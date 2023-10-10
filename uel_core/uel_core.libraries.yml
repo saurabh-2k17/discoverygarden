@@ -1,0 +1,10 @@
+uel_core.admin:
+  version: VERSION
+  css:
+    theme:
+      css/uel_core_admin.css: {}
+  js:
+    js/uel_core_admin.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal

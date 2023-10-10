@@ -1,0 +1,25 @@
+.custom-wrapper-scheduler {
+  font-weight: bold;
+  margin: 20px 0 5px;
+}
+
+.view.eb-media .views-row {
+  flex-wrap: wrap;
+}
+
+.view.eb-media .views-col {
+  width: 240px !important;
+  margin-bottom: 24px;
+}
+
+.view-media .views-field-name {
+  padding: 12px;
+}
+
+.toolbar .toolbar-menu {
+  text-indent: 0;
+}
+
+.cke_combopanel li::before {
+  display: none;
+}

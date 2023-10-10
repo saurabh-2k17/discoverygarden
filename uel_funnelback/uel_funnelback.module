@@ -1,0 +1,123 @@
+<?php
+
+/**
+ * @file
+ * Contains uel_funnelback.module.
+ */
+
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_page_attachments().
+ */
+function uel_funnelback_page_attachments(&$page) {
+  $route_match = \Drupal::routeMatch();
+  $node = $route_match->getParameter('node');
+  $fieldData = [];
+
+  if (!empty($node)
+    && $node instanceof NodeInterface) {
+
+    $contentTypeFieldData = \Drupal::service('uel_funnelback.content_type_field_data');
+    $nodeType = $node->getType();
+    switch ($nodeType) {
+      case 'accommodation':
+      case 'campaign':
+      case 'campus':
+      case 'careers':
+      case 'facilities':
+      case 'generic_content_page':
+      case 'generic_hub_page':
+      case 'homepage':
+      case 'landing_page':
+      case 'region':
+      case 'search_listing':
+      case 'funnelback_listing_hub_page':
+      case 'sports_club':
+      case 'academic_subject':
+      case 'news_content_page':
+        $fieldData = $contentTypeFieldData->getContentTypeFieldsData($node,
+          [
+            'field_display_title',
+            'field_featured_content_descripti',
+            'field_featured_content_image',
+            'field_tags',
+            'changed',
+          ]
+        );
+        break;
+
+      case 'course_page':
+        $fieldData = $contentTypeFieldData->getContentTypeFieldsData($node,
+          [
+            'field_course_clearing',
+            'field_course_clearing_reason',
+            'field_display_title',
+            'field_featured_content_descripti',
+            'field_featured_content_image',
+            'field_course_school',
+            'field_course_subject',
+            'field_quick_info_course_location',
+            'field_study_options',
+            'field_course_template_type',
+            'field_tags',
+            'changed',
+          ]
+        );
+        break;
+
+      case 'profile':
+        $fieldData = $contentTypeFieldData->getContentTypeFieldsData($node,
+          [
+            'field_display_title',
+            'field_featured_content_descripti',
+            'field_featured_content_image',
+            'field_staff_profile',
+            'field_tags',
+            'changed',
+          ]
+        );
+        break;
+
+      case 'events_content_page':
+        $fieldData = $contentTypeFieldData->getContentTypeFieldsData($node,
+          [
+            'field_display_title',
+            'field_featured_content_descripti',
+            'field_featured_content_image',
+            'field_event_date',
+            'field_event_location',
+            'field_tags',
+            'changed',
+          ]
+        );
+        break;
+
+      case 'non_standard_courses':
+        $fieldData = $contentTypeFieldData->getContentTypeFieldsData($node,
+          [
+            'field_display_title',
+            'field_featured_content_descripti',
+            'field_featured_content_image',
+            'field_course_type',
+            'field_course_option',
+            'field_tags',
+            'changed',
+          ]
+        );
+        break;
+
+      default:
+        break;
+    }
+    if (!empty($fieldData) && is_array($fieldData)) {
+      $meta = $contentTypeFieldData->createMetaStructure($fieldData);
+      foreach ($meta as $key => $value) {
+        $page['#attached']['html_head'][] = [
+          $value,
+          $value['#attributes']['content'] . $value['#attributes']['name'] . $key,
+        ];
+      }
+    }
+  }
+}

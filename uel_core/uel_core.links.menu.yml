@@ -1,0 +1,4 @@
+uel_core.user_groups:
+  weight: -50
+  parent: system.admin_content
+  class: Drupal\uel_core\Plugin\Menu\UserGroupsMenuLink

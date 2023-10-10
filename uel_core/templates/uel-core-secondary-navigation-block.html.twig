@@ -1,0 +1,16 @@
+{#
+/**
+ * @file
+ *  Secondary Navigation Block.
+ *
+ * Available variables:
+ * - data: array of result data attributes populated by modules, intended to
+ *   be print data result variables with html tags.
+ */
+#}
+
+<div{{attributes.addClass('secondary-navigation-block')}} class="secondary-navigation-wrapper">
+  <div class="secondary-navigation-content">
+    <div class="secondary-navigation-menu-items">{{ data }}</div>
+  </div>
+</div>

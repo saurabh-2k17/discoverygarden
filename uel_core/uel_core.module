@@ -1,0 +1,183 @@
+<?php
+
+/**
+ * @file
+ * Contains uel_core.module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function uel_core_form_block_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  // Get block type from from state values.
+  $block_type = uel_core_get_block_type_form_values($form_state);
+
+  // Validate if the block instance is of custom block content.
+  if (!empty($block_type)) {
+    // Validate promo banner block.
+    if ($block_type === 'promo_banner' || $block_type === 'feedback_form') {
+      // Check if the machine name is not disabled.
+      if (!$form['id']['#disabled']) {
+        // Set machine name to block type and random alphanumeric string.
+        $form['id']['#default_value'] = $block_type . '_' . uel_core_generate_alphanumeric_string(16);
+
+        // Disable machine name.
+        $form['id']['#disabled'] = TRUE;
+      }
+
+      // Add custom validation for machine name.
+      $form['#validate'][] = '_uel_core_validate_block_machine_name';
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function uel_core_form_menu_link_content_main_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  // Hide default hover field for main menu.
+  if (!empty($form['description'])) {
+    $form['description']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Helper function for validating the block machine name.
+ */
+function _uel_core_validate_block_machine_name($form, FormStateInterface &$form_state) {
+  // Get block type from from state values.
+  $block_type = uel_core_get_block_type_form_values($form_state);
+
+  // Validate if the block instance is of custom block content.
+  if (!empty($block_type)) {
+    // Validate promo banner block.
+    if ($block_type === 'promo_banner' || $block_type === 'feedback_form') {
+      // Get machine name of the block.
+      $machine_name = $form_state->getValue('id');
+
+      // Validate if machine name does not starts with block type.
+      if (substr_compare($machine_name, $block_type, 0, strlen($block_type))) {
+        $form_state->setErrorByName('id', t('Machine name of this block should start with "@block-name_".', ['@block-name' => $block_type]));
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function uel_core_theme() {
+  return [
+    'uel_core_secondary_navigation_block' => [
+      'variables' => [
+        'data' => NULL,
+      ],
+    ],
+  ];
+}
+
+/**
+ * Generate alphanumeric string of desired length.
+ *
+ * @param int $length
+ *   Length of the alphanumeric string to be generated.
+ *
+ * @return false|string
+ *   Alphanumeric string of the required length.
+ */
+function uel_core_generate_alphanumeric_string($length = 8) {
+  // String of all alphanumeric character.
+  $str_result = '0123456789abcdefghijklmnopqrstuvwxyz';
+
+  // Shufle the $str_result and returns substring of specified length.
+  return substr(str_shuffle($str_result), 0, $length);
+}
+
+/**
+ * Get block content type in the block from form values.
+ *
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   Form state.
+ *
+ * @return false|string
+ *   Block type if block content.
+ */
+function uel_core_get_block_type_form_values(FormStateInterface $form_state) {
+  if (empty($form_state)) {
+    return FALSE;
+  }
+
+  // Get block build info.
+  $block_build_info = $form_state->getBuildInfo();
+
+  if ((empty($block_build_info)) || (empty($block_build_info['callback_object']))) {
+    return FALSE;
+  }
+
+  // Get block plugin id.
+  $block_plugin_id = $block_build_info['callback_object']->getEntity()->getPluginId();
+
+  if (empty($block_plugin_id)) {
+    return FALSE;
+  }
+
+  // Get block details.
+  $block_id = explode(':', $block_plugin_id);
+
+  if ((empty($block_id)) || ($block_id[0] !== 'block_content') || (empty($block_id[1]))) {
+    return FALSE;
+  }
+
+  // Load block content.
+  $block_content = \Drupal::service('entity.repository')->loadEntityByUuid('block_content', $block_id[1]);
+
+  if (!empty($block_content)) {
+    return $block_content->bundle();
+  }
+
+  return FALSE;
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+function uel_core_page_attachments(array &$page) {
+  // Add the uel_core_js only for the admin routes.
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
+    $page['#attached']['library'][] = 'uel_core/uel_core.admin';
+    $page['#attached']['library'][] = 'uel_theme/admin-css-override';
+  }
+}
+
+/**
+ * Implements hook_preprocess_file_link().
+ */
+function uel_core_preprocess_file_link(&$variables) {
+  // Pass file mime and other file values to file-link.html.twig file.
+  if (!empty($variables['file'])) {
+    $variables['uel_file_link'] = [
+      'file_mime' => $variables['file']->getMimeType(),
+      'file_name' => $variables['file']->getFilename(),
+      'file_size_formatted' => format_size($variables['file']->getSize()),
+      'file_status' => $variables['file']->status->value,
+      'file_url' => file_create_url($variables['file']->getFileUri()),
+    ];
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function uel_core_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  if ($form_id === 'node_campaign_form'
+    || $form_id === 'node_campaign_edit_form'
+    || $form_id === 'node_homepage_form'
+    || $form_id === 'node_homepage_edit_form') {
+    if (isset($form["field_hero_banner"])) {
+      unset($form["field_hero_banner"]["widget"]["add_more"]);
+      unset($form['field_hero_banner']['widget'][0]['top']['links']['remove_button']);
+    }
+  }
+}

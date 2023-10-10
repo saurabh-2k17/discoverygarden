@@ -1,0 +1,74 @@
+<?php
+
+/**
+ * @file
+ * Provides install hooks for the UEL Core module.
+ */
+
+use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Site\Settings;
+use Drush\Drush;
+use Drupal\node\Entity\Node;
+
+/**
+ * Delete all nodes of the basic page content type.
+ */
+function uel_core_update_8001() {
+  // Temporary commented out the code for reverting the basic page of QA.
+  // Query to retrieve all nodes of basic page content type.
+  // $query = \Drupal::entityQuery('node');
+  // $query->condition('type', 'page');
+  // $pages = $query->execute();
+  //
+  // // Delete all nodes of basic page content type.
+  // $storage_handler = \Drupal::entityTypeManager()->getStorage('node');
+  // $entities = $storage_handler->loadMultiple($pages);
+  // $storage_handler->delete($entities);
+}
+
+/**
+ * Run a Acquia Cohesion import and rebuild.
+ */
+function uel_core_update_8002() {
+  $alias_manager = Drush::service('site.alias.manager');
+  Drush::drush($alias_manager->getSelf(), 'cohesion:import')->run();
+  Drush::drush($alias_manager->getSelf(), 'cohesion:rebuild')->run();
+}
+
+/**
+ * Run filter format config import.
+ */
+function uel_core_update_8003() {
+  // Import YAML config from an arbitrary file.
+  $config_path = Settings::get('config_sync_directory');
+  $source = new FileStorage($config_path);
+  $config_storage = \Drupal::service('config.storage');
+  $config_storage->write('filter.format.cohesion', $source->read('filter.format.cohesion'));
+}
+
+/**
+ * Run course page custom config import.
+ */
+function uel_core_update_8004() {
+  // Import YAML config from an arbitrary file.
+  $config_path = Settings::get('config_sync_directory');
+  $source = new FileStorage($config_path);
+  $config_storage = \Drupal::service('config.storage');
+  $config_storage->write('uel_custom_config.course_page_config', $source->read('uel_custom_config.course_page_config'));
+}
+
+/**
+ * Homepage content type update the default value of double arrow color field.
+ */
+function uel_core_update_8005() {
+  $node_ids = \Drupal::entityQuery('node')
+    ->condition('type', ['homepage'], 'IN')->execute();
+  $chunked_nids = array_chunk($node_ids, 50, TRUE);
+  foreach ($chunked_nids as $nids) {
+    $nodes = Node::loadMultiple($nids);
+    foreach ($nodes as $node) {
+      $node->set('field_double_arrow_color', 'white');
+      $node->save();
+    }
+  }
+}

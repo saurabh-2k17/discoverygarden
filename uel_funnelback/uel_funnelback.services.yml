@@ -1,0 +1,4 @@
+services:
+  uel_funnelback.content_type_field_data:
+    class: Drupal\uel_funnelback\Service\ContentTypeFieldData
+    arguments: ['@date.formatter', '@config.factory']
